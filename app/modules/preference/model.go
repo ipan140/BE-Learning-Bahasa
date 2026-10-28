@@ -14,6 +14,10 @@ type UserPreference struct {
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
+func (UserPreference) TableName() string {
+	return "user_preferences"
+}
+
 type SavePreferenceRequest struct {
 	AudioSpeed   float64 `json:"audioSpeed"`
 	AudioEnabled *bool   `json:"audioEnabled"`

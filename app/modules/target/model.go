@@ -15,6 +15,10 @@ type UserTarget struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+func (UserTarget) TableName() string {
+	return "user_targets"
+}
+
 func (t *UserTarget) BeforeCreate(tx *gorm.DB) error {
 	if t.ID == uuid.Nil {
 		t.ID = uuid.New()

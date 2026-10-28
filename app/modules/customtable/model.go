@@ -17,6 +17,10 @@ type UserCustomTable struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 }
 
+func (UserCustomTable) TableName() string {
+	return "user_custom_tables"
+}
+
 type UpsertTableRequest struct {
 	ID          string         `json:"id"`
 	Name        string         `json:"name"`

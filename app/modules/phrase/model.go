@@ -16,12 +16,20 @@ type UserCustomPhrase struct {
 	UpdatedAt  time.Time      `json:"updatedAt"`
 }
 
+func (UserCustomPhrase) TableName() string {
+	return "user_custom_phrases"
+}
+
 type UserPhraseCategory struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
 	UserID    uuid.UUID `gorm:"type:uuid;not null;index:idx_user_catname,unique" json:"userId"`
 	Name      string    `gorm:"type:text;not null;index:idx_user_catname,unique" json:"name"`
 	Icon      string    `gorm:"type:text" json:"icon"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+func (UserPhraseCategory) TableName() string {
+	return "user_phrase_categories"
 }
 
 func (c *UserPhraseCategory) BeforeCreate(tx *gorm.DB) error {

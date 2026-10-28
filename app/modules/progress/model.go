@@ -19,6 +19,10 @@ type UserStudyProgress struct {
 	Metadata        datatypes.JSON `gorm:"type:jsonb" json:"metadata,omitempty"`
 }
 
+func (UserStudyProgress) TableName() string {
+	return "user_study_progress"
+}
+
 func (p *UserStudyProgress) BeforeCreate(tx *gorm.DB) error {
 	if p.ID == uuid.Nil {
 		p.ID = uuid.New()
