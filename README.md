@@ -1,31 +1,45 @@
-# Learning Bahasa - Backend API (Go + Echo)
+# Learning Bahasa - Backend REST API (Go + Echo)
 
-Backend REST API mandiri untuk platform **Learning Bahasa**, dibangun menggunakan arsitektur **Modular Monolith** dengan pendekatan **Clean Layered Architecture (N-Tier)** per modul fitur.
+Backend REST API mandiri dan berkinerja tinggi untuk platform **Learning Bahasa**, dibangun menggunakan **Go (Golang)** dan framework **Echo v4**. Mengadopsi arsitektur **Feature-First Modular Monolith** dengan pendekatan **Clean 5-Tier Layered Architecture** pada setiap modul bisnisnya.
+
+Database dirancang **100% kompatibel dan identik dengan skema database Supabase** menggunakan **PostgreSQL** dan **GORM Auto-Migration**.
 
 ---
 
-## 🏗️ Pola Arsitektur
+## 📑 Daftar Isi
+- [Arsitektur & Pola Desain](#-arsitektur--pola-desain)
+- [Struktur Direktori](#-struktur-direktori)
+- [Skema Database & Model](#-skema-database--model)
+- [Panduan Memulai (Lokal)](#-panduan-memulai-lokal)
+- [Dokumentasi Interaktif (Swagger UI)](#-dokumentasi-interaktif-swagger-ui)
+- [Daftar Endpoint REST API](#-daftar-endpoint-rest-api)
+- [Panduan Deploy ke VPS (Linux Production)](#-panduan-deploy-ke-vps-linux-production)
+- [Variabel Environment (.env)](#-variabel-environment-env)
 
-### 1. Pola Utama: Modular Monolith
-* **Single Deployable Unit:** Seluruh backend dikompilasi menjadi satu file binary executable mandiri (`server` / `server.exe`), sangat hemat memori (RAM < 30 MB pada VPS).
-* **Domain Encapsulation:** Kode dipisahkan per modul bisnis di `app/modules/` (`auth`, `target`, `customtable`, `progress`, `phrase`, `preference`).
+---
 
-### 2. Pola Internal Modul: 5 Lapisan (Clean Layered)
-Setiap folder modul menerapkan 5 lapisan pemisahan tanggung jawab:
-```
-[ HTTP Request dari Frontend ]
-            │
-            ▼
-   route.go & handler.go   ──► Presentation Layer (Routing Echo, Binding, JSON Response)
-            │
-            ▼
-        service.go          ──► Business Logic Layer (Validasi Aturan & Alur Data)
-            │
-            ▼
-      repository.go         ──► Data Access Layer (GORM DB Queries & Clauses)
-            │
-            ▼
-         model.go           ──► Entity Layer (GORM Struct, JSON Tags, Schema Mapping)
+## 🏗️ Arsitektur & Pola Desain
+
+### 1. Modular Monolith (Feature-First)
+- **Single Deployable Unit:** Seluruh backend dikompilasi menjadi satu file binary executable mandiri (`server` / `server.exe`). Sangat hemat sumber daya (RAM < 30 MB pada VPS).
+- **Domain Encapsulation:** Logika bisnis dipisahkan mandiri per fitur dalam folder `app/modules/` (`auth`, `target`, `customtable`, `progress`, `phrase`, `preference`).
+
+### 2. Clean 5-Tier Layered Architecture (per Modul)
+Setiap modul menerapkan pemisahan tanggung jawab yang tegas:
+```text
+[ HTTP Request dari Frontend / Client ]
+                  │
+                  ▼
+         route.go & handler.go      ──► Presentation Layer (Routing Echo, Binding, Swagger Annotations, JSON Response)
+                  │
+                  ▼
+              service.go            ──► Business Logic Layer (Validasi Aturan & Alur Data Bisnis)
+                  │
+                  ▼
+            repository.go           ──► Data Access Layer (GORM DB Queries & Clauses)
+                  │
+                  ▼
+               model.go             ──► Entity Layer (GORM Struct, JSON Tags, Skema Pemetaan Tabel)
 ```
 
 ---
@@ -36,100 +50,220 @@ Setiap folder modul menerapkan 5 lapisan pemisahan tanggung jawab:
 D:\BE learning-bahasa\
 ├── cmd/
 │   └── api/
-│       └── main.go              # Entry point: inisialisasi Echo, DB, router, & start server
+│       └── main.go                 # Entry point: Inisialisasi Echo, DB, Swagger UI, & Router
+├── config/
+│   ├── config.go                   # Load konfigurasi murni dari .env (Zero hardcoded secret)
+│   └── database.go                 # Inisialisasi PostgreSQL GORM & AutoMigrate 7 tabel
+├── common/
+│   ├── middleware/
+│   │   ├── auth.go                 # Middleware JWT Token & Claims Context
+│   │   └── cors.go                 # Konfigurasi Cross-Origin Resource Sharing (CORS)
+│   └── utils/
+│       └── response.go             # Standar struktur respon JSON (Success, Error, OK)
+├── docs/
+│   ├── docs.go                     # Hasil kompilasi Swaggo
+│   ├── swagger.json                # Spesifikasi OpenAPI JSON
+│   └── swagger.yaml                # Spesifikasi OpenAPI YAML
 ├── app/
-│   ├── config/                  # Load file .env
-│   ├── database/                # Koneksi GORM PostgreSQL & AutoMigrate 6 tabel
-│   ├── middleware/              # JWT Auth Middleware & klaim context
 │   └── modules/
-│       ├── auth/                # Login, Register, Google OAuth, Profile
-│       ├── target/              # Target negara berbintang, batch sync, catatan
-│       ├── customtable/         # CRUD tabel aksara kustom (grid huruf JSONB)
-│       ├── progress/            # Huruf hafal & skor kuis (flashcard & listening)
-│       ├── phrase/              # Frasa kustom harian & kategori frasa
-│       └── preference/          # Setelan kecepatan suara, toggle audio, tema
-├── pkg/
-│   └── response/                # Standar response JSON
-├── .env                         # Konfigurasi database & JWT
-├── go.mod
-└── go.sum
+│       ├── auth/                   # Modul Akun, JWT Token, Google OAuth, Profil
+│       ├── target/                 # Modul Negara Berbintang, Batch Sync, Catatan Motivasi
+│       ├── customtable/            # Modul Studio Aksara Kustom (Grid Susunan Huruf JSONB)
+│       ├── progress/               # Modul Huruf Hafal, Streak Count, Riwayat Skor Kuis
+│       ├── phrase/                 # Modul Frasa Kustom & Kategori Kartu Frasa
+│       └── preference/             # Modul Setelan Audio (Speed, Toggle) & Tema
+├── .env                            # Variabel lingkungan lokal
+├── .env.example                    # Template variabel lingkungan
+├── .gitignore                      # Git ignore file (binary, log, .env diabaikan)
+├── go.mod                          # Go module dependencies
+└── go.sum                          # Checksum dependencies
 ```
+
+---
+
+## 🗄️ Skema Database & Model
+
+Backend ini mengelola **7 tabel relasional** di PostgreSQL dengan tipe data yang presisi menyesuaikan schema Supabase:
+
+| Nama Tabel | Primary Key | Foreign Key | Kolom Kunci Lainnya |
+| :--- | :--- | :--- | :--- |
+| `users` | `id` (uuid) | - | `email`, `password_hash`, `display_name`, `avatar_url`, `created_at` |
+| `user_targets` | `id` (uuid) | `user_id` (uuid) | `country_id`, `notes`, `created_at` |
+| `user_custom_tables` | `id` (text) | `user_id` (uuid) | `name`, `script`, `description`, `rows` (jsonb), `created_at` |
+| `user_study_progress` | `id` (uuid) | `user_id` (uuid) | `table_id`, `memorized_chars` (jsonb), `score`, `streak_count`, `last_practiced_at`, `metadata` (jsonb) |
+| `user_custom_phrases` | `id` (text) | `user_id` (uuid) | `language_id`, `categories` (jsonb), `updated_at` |
+| `user_phrase_categories` | `id` (uuid) | `user_id` (uuid) | `name`, `icon`, `created_at` |
+| `user_preferences` | `user_id` (uuid) | `user_id` (uuid) | `theme`, `audio_speed` (numeric), `audio_enabled` (bool), `updated_at` |
+
+> [!NOTE]
+> **Auto-Migration Aktif:** Anda **tidak perlu membuat tabel secara manual**. Saat server backend pertama kali dijalankan dan terhubung ke PostgreSQL, seluruh tabel, kolom, index, dan primary key akan dibuatkan secara otomatis oleh GORM.
 
 ---
 
 ## 🚀 Panduan Memulai (Lokal)
 
-### 1. Unduh Dependensi
+### 1. Prasyarat
+- **Go:** Versi 1.25 atau lebih baru
+- **PostgreSQL:** Berjalan secara lokal (port 5432) atau via container Docker
+
+### 2. Buat Database Kosong di PostgreSQL
+Jalankan di `psql`, pgAdmin, atau DBeaver:
+```sql
+CREATE DATABASE learning_bahasa;
+```
+
+### 3. Konfigurasi File `.env`
+Salin template atau sesuaikan file `.env`:
+```env
+PORT=8080
+DATABASE_URL=postgres://postgres:password_anda@localhost:5432/learning_bahasa?sslmode=disable
+JWT_SECRET=kunci-rahasia-jwt-panjang-dan-aman
+GOOGLE_CLIENT_ID=
+FRONTEND_URL=http://localhost:4321
+```
+
+### 4. Unduh Dependensi
 ```bash
 go mod tidy
 ```
 
-### 2. Konfigurasi Database
-Buka file `.env` dan pastikan URL PostgreSQL sudah sesuai:
-```env
-DATABASE_URL=postgres://postgres:password@localhost:5432/learning_bahasa?sslmode=disable
-```
-
-### 3. Jalankan Server
+### 5. Jalankan Server
 ```bash
+# Menggunakan go run:
 go run cmd/api/main.go
+
+# Atau build binary lokal Windows:
+go build -o server.exe cmd/api/main.go
+.\server.exe
 ```
-Server akan otomatis membuat 6 tabel database dan siap melayani request di port `http://localhost:8080`.
+
+Server akan aktif di `http://localhost:8080`.
 
 ---
 
-## 🐧 Kompilasi untuk Deploy ke VPS (Linux 64-bit)
+## 📖 Dokumentasi Interaktif (Swagger UI)
 
-Salah satu keunggulan terbesar Go adalah kemudahan deploy ke VPS tanpa perlu install Node.js/npm:
+Semua handler API telah dilengkapi anotasi Swaggo standar OpenAPI. Anda dapat mencoba dan menguji setiap endpoint secara visual:
 
+👉 **URL Swagger UI:** [http://localhost:8080/swagger](http://localhost:8080/swagger)
+
+### Cara Generate Ulang Swagger Docs (Jika Ada Penambahan Endpoint):
 ```bash
-# Jalankan di terminal PowerShell Anda:
-$env:GOOS="linux"; $env:GOARCH="amd64"; go build -ldflags="-w -s" -o server cmd/api/main.go
-```
-* Perintah ini menghasilkan 1 file binary Linux bernama `server` (ukuran ~15 MB).
-* Cukup upload file `server` dan `.env` ke VPS Anda, lalu jalankan:
-```bash
-chmod +x server
-./server
+swag init --parseDependency -g cmd/api/main.go -o docs
 ```
 
 ---
 
-## 📡 Daftar Endpoint API
+## 📡 Daftar Endpoint REST API
 
 ### 1. Autentikasi (`/api/auth`)
-* `POST /api/auth/register` - Daftar akun baru (Email, Password, Display Name)
-* `POST /api/auth/login` - Masuk dengan email & sandi (Mengembalikan JWT token)
-* `POST /api/auth/google` - Masuk lewat akun Google OAuth
-* `GET  /api/auth/me` - Ambil profil pengguna yang sedang login `[Wajib Token]`
-* `PUT  /api/auth/profile` - Perbarui nama tampilan & foto profil avatar `[Wajib Token]`
+- `POST /api/auth/register` - Pendaftaran akun baru (Email, Password, Display Name)
+- `POST /api/auth/login` - Masuk dengan email & password (Kembalikan JWT Token)
+- `POST /api/auth/google` - Masuk menggunakan Google OAuth
+- `GET  /api/auth/me` - Ambil profil pengguna login saat ini `[BearerAuth]`
+- `PUT  /api/auth/profile` - Perbarui Display Name & Avatar `[BearerAuth]`
 
-### 2. Target Negara (`/api/targets`) `[Wajib Token]`
-* `GET    /api/targets` - Ambil daftar negara berbintang & catatan impian
-* `POST   /api/targets` - Beri bintang pada negara target baru
-* `DELETE /api/targets/:countryId` - Hapus bintang dari negara target
-* `POST   /api/targets/batch` - Sinkronisasi massal seluruh target lokal
-* `PUT    /api/targets/:countryId/notes` - Simpan catatan rencana / motivasi belajar negara
+### 2. Target Negara (`/api/targets`)
+- `GET    /api/targets` - Ambil daftar negara berbintang & catatan `[BearerAuth]`
+- `POST   /api/targets` - Beri bintang pada satu negara baru `[BearerAuth]`
+- `DELETE /api/targets/{countryId}` - Hapus bintang dari negara target `[BearerAuth]`
+- `POST   /api/targets/batch` - Sinkronisasi massal seluruh target dari localStorage `[BearerAuth]`
+- `PUT    /api/targets/{countryId}/notes` - Simpan catatan motivasi / rencana belajar negara `[BearerAuth]`
 
-### 3. Tabel Aksara Kustom (`/api/custom-tables`) `[Wajib Token]`
-* `GET    /api/custom-tables` - Ambil seluruh tabel aksara buatan user
-* `POST   /api/custom-tables` - Simpan / buat tabel aksara baru (termasuk susunan kotak huruf)
-* `PUT    /api/custom-tables/:id` - Perbarui tabel aksara saat Mode Edit aktif
-* `DELETE /api/custom-tables/:id` - Hapus tabel aksara kustom
+### 3. Studio Aksara Kustom (`/api/custom-tables`)
+- `GET    /api/custom-tables` - Ambil semua tabel aksara buatan user `[BearerAuth]`
+- `POST   /api/custom-tables` - Simpan / buat tabel aksara baru (termasuk grid baris huruf JSONB) `[BearerAuth]`
+- `DELETE /api/custom-tables/{id}` - Hapus tabel aksara kustom `[BearerAuth]`
 
-### 4. Progres Belajar & Kuis (`/api/progress` & `/api/quiz-scores`) `[Wajib Token]`
-* `GET  /api/progress` - Ambil riwayat huruf yang sudah ditandai hafal (bergaris hijau)
-* `POST /api/progress` - Simpan progres huruf yang baru dihafal
-* `POST /api/quiz-scores` - Simpan skor kuis & streak latihan
+### 4. Progres Belajar & Kuis (`/api/progress` & `/api/quiz-scores`)
+- `GET  /api/progress` - Ambil riwayat karakter yang sudah ditandai hafal `[BearerAuth]`
+- `POST /api/progress` - Simpan data karakter yang baru dihafal & streak count `[BearerAuth]`
+- `POST /api/quiz-scores` - Simpan skor kuis latihan & streak `[BearerAuth]`
 
-### 5. Frasa Kustom (`/api/phrases` & `/api/phrase-categories`) `[Wajib Token]`
-* `GET    /api/phrases` - Ambil seluruh frasa kustom per bahasa
-* `POST   /api/phrases` - Simpan kumpulan frasa kustom baru
-* `DELETE /api/phrases/:languageId` - Hapus frasa untuk suatu bahasa
-* `GET    /api/phrase-categories` - Ambil daftar kategori frasa kustom
-* `POST   /api/phrase-categories` - Tambah satu kategori frasa kustom baru
-* `DELETE /api/phrase-categories/:name` - Hapus kategori frasa kustom
+### 5. Frasa Kustom (`/api/phrases` & `/api/phrase-categories`)
+- `GET    /api/phrases` - Ambil daftar frasa kustom per bahasa `[BearerAuth]`
+- `POST   /api/phrases` - Simpan kumpulan frasa kustom baru `[BearerAuth]`
+- `DELETE /api/phrases/{languageId}` - Hapus frasa kustom bahasa tertentu `[BearerAuth]`
+- `GET    /api/phrase-categories` - Ambil daftar kategori kartu frasa `[BearerAuth]`
+- `POST   /api/phrase-categories` - Tambah kategori kartu frasa baru `[BearerAuth]`
+- `DELETE /api/phrase-categories/{name}` - Hapus kategori kartu frasa `[BearerAuth]`
 
-### 6. Pengaturan & Preferensi (`/api/preferences`) `[Wajib Token]`
-* `GET /api/preferences` - Ambil setelan kecepatan audio, toggle audio, dan tema
-* `PUT /api/preferences` - Simpan perubahan preferensi pengguna
+### 6. Pengaturan & Preferensi (`/api/preferences`)
+- `GET /api/preferences` - Ambil preferensi pengguna (kecepatan audio, status audio, tema) `[BearerAuth]`
+- `PUT /api/preferences` - Simpan pembaruan preferensi `[BearerAuth]`
+
+---
+
+## 🐧 Panduan Deploy ke VPS (Linux Production)
+
+Keuntungan utama menggunakan Go adalah binary mandiri yang **sangat mudah dideploy ke VPS Ubuntu/Debian tanpa perlu install runtime Go, Node.js, atau npm**.
+
+### 1. Kompilasi Cross-Compile Binary untuk Linux 64-bit
+Jalankan perintah ini di PowerShell Windows Anda:
+```powershell
+$env:GOOS="linux"; $env:GOARCH="amd64"; go build -ldflags="-w -s" -o server cmd/api/main.go
+```
+*Akan menghasilkan satu file binary Linux mandiri bernama `server` (~15 MB).*
+
+### 2. Upload ke VPS
+Upload file `server` dan file `.env` ke folder di VPS Anda (misalnya `/var/www/learning-bahasa-be`):
+```bash
+scp server .env user@ip-vps-anda:/var/www/learning-bahasa-be/
+```
+
+### 3. Beri Izin Eksekusi di VPS
+```bash
+ssh user@ip-vps-anda
+cd /var/www/learning-bahasa-be
+chmod +x server
+```
+
+### 4. Pasang Systemd Service (Agar Otomatis Jalan di Background)
+Buat file service systemd:
+```bash
+sudo nano /etc/systemd/system/learning-bahasa.service
+```
+
+Isi dengan konfigurasi berikut:
+```ini
+[Unit]
+Description=Learning Bahasa Backend Service
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/learning-bahasa-be
+ExecStart=/var/www/learning-bahasa-be/server
+Restart=always
+RestartSec=5
+EnvironmentFile=/var/www/learning-bahasa-be/.env
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Aktifkan dan jalankan servicenya:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable learning-bahasa
+sudo systemctl start learning-bahasa
+sudo systemctl status learning-bahasa
+```
+
+---
+
+## ⚙️ Variabel Environment (.env)
+
+| Variabel | Deskripsi | Default / Contoh |
+| :--- | :--- | :--- |
+| `PORT` | Port HTTP yang digunakan server | `8080` |
+| `DATABASE_URL` | String koneksi PostgreSQL | `postgres://user:pass@host:5432/dbname?sslmode=disable` |
+| `JWT_SECRET` | Kunci enkripsi token autentikasi JWT | `string-acak-panjang-dan-rahasia` |
+| `GOOGLE_CLIENT_ID` | Client ID Google OAuth (opsional) | `123456...apps.googleusercontent.com` |
+| `FRONTEND_URL` | URL Frontend untuk izin CORS | `https://learning-bahasa-news.vercel.app` |
+
+---
+
+## 📄 Lisensi
+Didistribusikan di bawah lisensi MIT.
