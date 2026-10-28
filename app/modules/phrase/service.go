@@ -15,8 +15,8 @@ type Service interface {
 	SavePhrases(userID uuid.UUID, req SavePhrasesRequest) error
 	DeletePhrases(userID uuid.UUID, languageID string) error
 
-	GetCategories(userID uuid.UUID) ([]string, error)
-	SaveCategory(userID uuid.UUID, name string) error
+	GetCategories(userID uuid.UUID) ([]UserPhraseCategory, error)
+	SaveCategory(userID uuid.UUID, req SaveCategoryRequest) error
 	DeleteCategory(userID uuid.UUID, name string) error
 }
 
@@ -70,19 +70,21 @@ func (s *service) DeletePhrases(userID uuid.UUID, languageID string) error {
 	return s.repo.DeletePhrases(userID, langID)
 }
 
-func (s *service) GetCategories(userID uuid.UUID) ([]string, error) {
+func (s *service) GetCategories(userID uuid.UUID) ([]UserPhraseCategory, error) {
 	return s.repo.FindCategoriesByUserID(userID)
 }
 
-func (s *service) SaveCategory(userID uuid.UUID, name string) error {
-	catName := strings.TrimSpace(name)
+func (s *service) SaveCategory(userID uuid.UUID, req SaveCategoryRequest) error {
+	catName := strings.TrimSpace(req.Name)
 	if catName == "" {
 		return errors.New("nama kategori wajib diisi")
 	}
 
 	return s.repo.AddCategory(&UserPhraseCategory{
+		ID:        uuid.New(),
 		UserID:    userID,
 		Name:      catName,
+		Icon:      strings.TrimSpace(req.Icon),
 		CreatedAt: time.Now(),
 	})
 }

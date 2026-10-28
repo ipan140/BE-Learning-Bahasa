@@ -4,3 +4,59 @@
 *.exe
 server
 README.md
+# =========================
+# Git & VCS
+# =========================
+.git
+.gitignore
+
+# =========================
+# Env & Config
+# =========================
+.env
+.env.*
+secrets*.yaml
+values*.yaml
+
+# =========================
+# Build Output
+# =========================
+bin/
+build/
+dist/
+*.exe
+*.out
+*.test
+
+# =========================
+# Dependency Cache
+# =========================
+vendor/
+
+# =========================
+# Logs
+# =========================
+*.log
+npm-debug.log*
+
+# =========================
+# OS / Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# =========================
+# Docker
+# =========================
+docker-compose*
+Dockerfile*
+
+# =========================
+# Docs (optional)
+# =========================
+docs/swagger.json
+docs/swagger.yaml

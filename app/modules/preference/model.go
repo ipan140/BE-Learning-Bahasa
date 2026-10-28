@@ -8,9 +8,9 @@ import (
 
 type UserPreference struct {
 	UserID       uuid.UUID `gorm:"type:uuid;primaryKey" json:"userId"`
-	AudioSpeed   float64   `gorm:"default:1.0" json:"audioSpeed"`
-	AudioEnabled bool      `gorm:"default:true" json:"audioEnabled"`
-	Theme        string    `gorm:"size:20;default:'light'" json:"theme"`
+	Theme        string    `gorm:"type:text;default:'light'" json:"theme"`
+	AudioSpeed   float64   `gorm:"type:numeric;default:1.0" json:"audioSpeed"`
+	AudioEnabled bool      `gorm:"type:bool;default:true" json:"audioEnabled"`
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
 

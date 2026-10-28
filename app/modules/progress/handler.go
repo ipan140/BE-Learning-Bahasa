@@ -16,6 +16,15 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
+// GetProgress godoc
+// @Summary Ambil Progres Huruf yang Dihafal
+// @Description Mengambil riwayat huruf yang sudah ditandai hafal (bergaris hijau) per tabel
+// @Tags Progress & Quiz
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} utils.Response{data=map[string][]string}
+// @Failure 401 {object} utils.Response
+// @Router /progress [get]
 func (h *Handler) GetProgress(c echo.Context) error {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -30,6 +39,18 @@ func (h *Handler) GetProgress(c echo.Context) error {
 	return utils.OK(c, data)
 }
 
+// SaveProgress godoc
+// @Summary Simpan Huruf yang Baru Dihafal
+// @Description Menyimpan daftar huruf yang berhasil dihafal pengguna pada suatu tabel
+// @Tags Progress & Quiz
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body SaveProgressRequest true "Payload Progres Belajar"
+// @Success 200 {object} utils.Response
+// @Failure 400 {object} utils.Response
+// @Failure 401 {object} utils.Response
+// @Router /progress [post]
 func (h *Handler) SaveProgress(c echo.Context) error {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -48,6 +69,18 @@ func (h *Handler) SaveProgress(c echo.Context) error {
 	return utils.Success(c, http.StatusOK, "Progres belajar berhasil disimpan", nil)
 }
 
+// SaveQuizScore godoc
+// @Summary Simpan Skor Kuis Hafalan & Listening
+// @Description Mencatat perolehan skor dan streak kemenangan kuis latihan aksara
+// @Tags Progress & Quiz
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body SaveQuizScoreRequest true "Payload Skor Kuis"
+// @Success 200 {object} utils.Response
+// @Failure 400 {object} utils.Response
+// @Failure 401 {object} utils.Response
+// @Router /quiz-scores [post]
 func (h *Handler) SaveQuizScore(c echo.Context) error {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {

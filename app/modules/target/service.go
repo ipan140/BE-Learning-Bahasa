@@ -57,7 +57,6 @@ func (s *service) AddTarget(userID uuid.UUID, countryID string) error {
 		UserID:    userID,
 		CountryID: cid,
 		CreatedAt: now,
-		UpdatedAt: now,
 	})
 }
 

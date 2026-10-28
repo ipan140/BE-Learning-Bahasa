@@ -57,11 +57,14 @@ func (s *service) SaveProgress(userID uuid.UUID, req SaveProgressRequest) error 
 	}
 
 	return s.repo.Upsert(&UserStudyProgress{
+		ID:              uuid.New(),
 		UserID:          userID,
 		TableID:         tableID,
 		MemorizedChars:  rawChars,
 		Score:           req.Score,
+		StreakCount:     req.StreakCount,
 		LastPracticedAt: time.Now(),
+		Metadata:        req.Metadata,
 	})
 }
 
@@ -71,5 +74,5 @@ func (s *service) SaveQuizScore(userID uuid.UUID, req SaveQuizScoreRequest) erro
 		return errors.New("tableId wajib diisi")
 	}
 
-	return s.repo.SaveScore(userID, tableID, req.Score)
+	return s.repo.SaveScore(userID, tableID, req.Score, req.StreakCount)
 }

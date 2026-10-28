@@ -8,20 +8,20 @@ import (
 )
 
 type UserCustomTable struct {
-	ID          string         `gorm:"primaryKey;size:100" json:"id"`
+	ID          string         `gorm:"primaryKey;type:text" json:"id"`
 	UserID      uuid.UUID      `gorm:"type:uuid;index;not null" json:"userId"`
-	Name        string         `gorm:"size:150;not null" json:"name"`
-	VoiceLang   string         `gorm:"size:20" json:"voiceLang"`
+	Name        string         `gorm:"type:text;not null" json:"name"`
+	Script      string         `gorm:"type:text" json:"script"` // Voice language / script
 	Description string         `gorm:"type:text" json:"description"`
 	Rows        datatypes.JSON `gorm:"type:jsonb" json:"rows"` // Susunan grid aksara per baris
 	CreatedAt   time.Time      `json:"createdAt"`
-	UpdatedAt   time.Time      `json:"updatedAt"`
 }
 
 type UpsertTableRequest struct {
 	ID          string         `json:"id"`
 	Name        string         `json:"name"`
-	VoiceLang   string         `json:"voiceLang"`
+	Script      string         `json:"script"`
+	VoiceLang   string         `json:"voiceLang"` // fallback alias
 	Description string         `json:"description"`
 	Rows        datatypes.JSON `json:"rows"`
 }

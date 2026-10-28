@@ -16,6 +16,15 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
+// GetTables godoc
+// @Summary Ambil Seluruh Tabel Aksara Kustom
+// @Description Mengambil semua tabel aksara buatan pengguna beserta baris/grid huruf
+// @Tags Custom Tables
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} utils.Response{data=[]UserCustomTable}
+// @Failure 401 {object} utils.Response
+// @Router /custom-tables [get]
 func (h *Handler) GetTables(c echo.Context) error {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -30,6 +39,19 @@ func (h *Handler) GetTables(c echo.Context) error {
 	return utils.OK(c, tables)
 }
 
+// SaveTable godoc
+// @Summary Buat atau Perbarui Tabel Aksara Kustom
+// @Description Menyimpan tabel aksara baru atau memperbarui susunan kotak huruf (Mode Edit aktif)
+// @Tags Custom Tables
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string false "ID Tabel Kustom (opsional jika update)"
+// @Param request body UpsertTableRequest true "Payload Tabel Aksara"
+// @Success 200 {object} utils.Response{data=UserCustomTable}
+// @Failure 400 {object} utils.Response
+// @Failure 401 {object} utils.Response
+// @Router /custom-tables [post]
 func (h *Handler) SaveTable(c echo.Context) error {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -53,6 +75,17 @@ func (h *Handler) SaveTable(c echo.Context) error {
 	return utils.Success(c, http.StatusOK, "Tabel kustom berhasil disimpan", table)
 }
 
+// DeleteTable godoc
+// @Summary Hapus Tabel Aksara Kustom
+// @Description Menghapus tabel aksara buatan pengguna berdasarkan ID
+// @Tags Custom Tables
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "ID Tabel Kustom (contoh: custom-173000000)"
+// @Success 200 {object} utils.Response
+// @Failure 400 {object} utils.Response
+// @Failure 401 {object} utils.Response
+// @Router /custom-tables/{id} [delete]
 func (h *Handler) DeleteTable(c echo.Context) error {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {

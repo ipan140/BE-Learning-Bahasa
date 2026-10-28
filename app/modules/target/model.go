@@ -4,14 +4,22 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type UserTarget struct {
-	UserID    uuid.UUID `gorm:"type:uuid;primaryKey" json:"userId"`
-	CountryID string    `gorm:"primaryKey;size:10" json:"countryId"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID    uuid.UUID `gorm:"type:uuid;not null;index:idx_user_country,unique" json:"userId"`
+	CountryID string    `gorm:"type:text;not null;index:idx_user_country,unique" json:"countryId"`
 	Notes     string    `gorm:"type:text" json:"notes"`
 	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (t *UserTarget) BeforeCreate(tx *gorm.DB) error {
+	if t.ID == uuid.Nil {
+		t.ID = uuid.New()
+	}
+	return nil
 }
 
 type AddTargetRequest struct {

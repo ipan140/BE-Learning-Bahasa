@@ -23,6 +23,9 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) FindByEmail(email string) (*User, error) {
+	if r.db == nil {
+		return nil, errors.New("database belum terhubung. Periksa konfigurasi DATABASE_URL di file .env")
+	}
 	var user User
 	err := r.db.Where("LOWER(email) = LOWER(?)", email).First(&user).Error
 	if err != nil {
@@ -35,6 +38,9 @@ func (r *repository) FindByEmail(email string) (*User, error) {
 }
 
 func (r *repository) FindByID(id uuid.UUID) (*User, error) {
+	if r.db == nil {
+		return nil, errors.New("database belum terhubung. Periksa konfigurasi DATABASE_URL di file .env")
+	}
 	var user User
 	err := r.db.First(&user, "id = ?", id).Error
 	if err != nil {
@@ -47,10 +53,16 @@ func (r *repository) FindByID(id uuid.UUID) (*User, error) {
 }
 
 func (r *repository) Create(user *User) error {
+	if r.db == nil {
+		return errors.New("database belum terhubung. Periksa konfigurasi DATABASE_URL di file .env")
+	}
 	return r.db.Create(user).Error
 }
 
 func (r *repository) UpdateProfile(id uuid.UUID, displayName, avatarURL string) (*User, error) {
+	if r.db == nil {
+		return nil, errors.New("database belum terhubung. Periksa konfigurasi DATABASE_URL di file .env")
+	}
 	updates := map[string]interface{}{}
 	if displayName != "" {
 		updates["display_name"] = displayName

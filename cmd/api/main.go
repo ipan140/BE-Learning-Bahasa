@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 
 	"learning-bahasa-be/app/modules/auth"
 	"learning-bahasa-be/app/modules/customtable"
@@ -16,7 +17,27 @@ import (
 	"learning-bahasa-be/common/middleware"
 	"learning-bahasa-be/common/utils"
 	"learning-bahasa-be/config"
+	_ "learning-bahasa-be/docs"
 )
+
+// @title Learning Bahasa API
+// @version 1.0
+// @description Backend REST API Service untuk Platform Belajar Bahasa & Studio Aksara Kustom.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.email support@learningbahasa.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Masukkan token JWT Anda dengan format: Bearer {token}
 
 func main() {
 	// 1. Muat konfigurasi .env
@@ -36,17 +57,24 @@ func main() {
 	e.Use(echoMiddleware.Recover())
 	e.Use(middleware.CORSMiddleware())
 
-	// Health Check Endpoint
+	// Health Check & Root Info
 	e.GET("/", func(c echo.Context) error {
 		return utils.OK(c, map[string]interface{}{
 			"service": "Learning Bahasa REST API",
 			"status":  "running",
 			"runtime": "Go (Echo Framework) - Modular Monolith",
+			"docs":    "/swagger",
 		})
 	})
 
 	e.GET("/health", func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
+	})
+
+	// Swagger UI Endpoints
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+	e.GET("/swagger", func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
 	})
 
 	// 5. Inisialisasi API Route Group & Auth Middleware
@@ -64,6 +92,7 @@ func main() {
 
 	// 7. Jalankan Server
 	log.Printf("🚀 Server Learning Bahasa Backend berjalan di port :%s\n", cfg.Port)
+	log.Printf("📖 Swagger UI Docs tersedia di: http://localhost:%s/swagger\n", cfg.Port)
 	if err := e.Start(":" + cfg.Port); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server berhenti dengan error: %v", err)
 	}

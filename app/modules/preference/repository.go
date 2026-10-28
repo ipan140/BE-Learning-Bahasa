@@ -23,6 +23,9 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) FindByUserID(userID uuid.UUID) (*UserPreference, error) {
+	if r.db == nil {
+		return nil, errors.New("database belum terhubung. Periksa konfigurasi DATABASE_URL di file .env")
+	}
 	var pref UserPreference
 	err := r.db.Where("user_id = ?", userID).First(&pref).Error
 	if err != nil {
@@ -35,6 +38,9 @@ func (r *repository) FindByUserID(userID uuid.UUID) (*UserPreference, error) {
 }
 
 func (r *repository) Upsert(pref *UserPreference) error {
+	if r.db == nil {
+		return errors.New("database belum terhubung. Periksa konfigurasi DATABASE_URL di file .env")
+	}
 	pref.UpdatedAt = time.Now()
 	return r.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "user_id"}},

@@ -1,0 +1,534 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Learning Bahasa REST API",
+    "description": "Dokumentasi API interaktif untuk platform Learning Bahasa. Mendukung autentikasi JWT (Bearer Token), sinkronisasi target negara, tabel aksara kustom, progres hafalan kuis, frasa harian, dan preferensi pengguna.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Masukkan token JWT yang didapatkan setelah login (contoh: eyJhbGciOi...)"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string", "example": "user@gmail.com" },
+          "displayName": { "type": "string", "example": "Ipan Rossi" },
+          "avatarUrl": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "example": "user@gmail.com" },
+          "password": { "type": "string", "example": "rahasia123" },
+          "displayName": { "type": "string", "example": "Ipan Rossi" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "example": "user@gmail.com" },
+          "password": { "type": "string", "example": "rahasia123" }
+        }
+      },
+      "GoogleLoginRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": { "type": "string", "example": "user@gmail.com" },
+          "displayName": { "type": "string", "example": "Ipan Rossi" },
+          "avatarUrl": { "type": "string" }
+        }
+      },
+      "AddTargetRequest": {
+        "type": "object",
+        "required": ["countryId"],
+        "properties": {
+          "countryId": { "type": "string", "example": "JP" }
+        }
+      },
+      "BatchSyncRequest": {
+        "type": "object",
+        "required": ["countryIds"],
+        "properties": {
+          "countryIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["JP", "DE", "KR"]
+          }
+        }
+      },
+      "SaveNotesRequest": {
+        "type": "object",
+        "required": ["notes"],
+        "properties": {
+          "notes": { "type": "string", "example": "Target hafal 50 kanji dan liburan ke Kyoto 2027!" }
+        }
+      },
+      "UpsertTableRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "id": { "type": "string", "example": "custom-173000000" },
+          "name": { "type": "string", "example": "Aksara Hanacaraka" },
+          "script": { "type": "string", "example": "jv-ID" },
+          "description": { "type": "string", "example": "Tabel 20 huruf Jawa" },
+          "rows": {
+            "type": "array",
+            "example": [
+              [{"romaji": "Ha", "char": "ꦲ"}, {"romaji": "Na", "char": "ꦤ"}]
+            ]
+          }
+        }
+      },
+      "SaveProgressRequest": {
+        "type": "object",
+        "required": ["tableId"],
+        "properties": {
+          "tableId": { "type": "string", "example": "japanese-hiragana" },
+          "memorizedChars": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["あ", "い", "う"]
+          },
+          "score": { "type": "integer", "example": 100 },
+          "streakCount": { "type": "integer", "example": 5 }
+        }
+      },
+      "SaveQuizScoreRequest": {
+        "type": "object",
+        "required": ["tableId", "score"],
+        "properties": {
+          "tableId": { "type": "string", "example": "japanese-hiragana" },
+          "score": { "type": "integer", "example": 80 },
+          "streakCount": { "type": "integer", "example": 3 }
+        }
+      },
+      "SavePhrasesRequest": {
+        "type": "object",
+        "required": ["languageId"],
+        "properties": {
+          "languageId": { "type": "string", "example": "japanese" },
+          "categories": {
+            "type": "array",
+            "example": [
+              {
+                "category": "Salam & Sapaan",
+                "items": [
+                  {"phrase": "Konnichiwa", "translation": "Halo / Selamat siang"}
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "SaveCategoryRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "example": "Belanja & Pasar" },
+          "icon": { "type": "string", "example": "shopping-bag" }
+        }
+      },
+      "SavePreferenceRequest": {
+        "type": "object",
+        "properties": {
+          "audioSpeed": { "type": "number", "example": 1.0 },
+          "audioEnabled": { "type": "boolean", "example": true },
+          "theme": { "type": "string", "example": "dark" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Autentikasi"],
+        "summary": "Daftar Akun Baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Akun berhasil dibuat" },
+          "400": { "description": "Data tidak valid atau email sudah terdaftar" }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Autentikasi"],
+        "summary": "Masuk / Login dengan Email & Password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Berhasil login, mengembalikan JWT token" },
+          "401": { "description": "Email atau password salah" }
+        }
+      }
+    },
+    "/api/auth/google": {
+      "post": {
+        "tags": ["Autentikasi"],
+        "summary": "Login dengan Google OAuth",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GoogleLoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login Google berhasil" }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": ["Autentikasi"],
+        "summary": "Ambil Profil Pengguna Saat Ini",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Data profil user" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/auth/profile": {
+      "put": {
+        "tags": ["Autentikasi"],
+        "summary": "Perbarui Nama Tampilan & Foto Profil",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": { "type": "string" },
+                  "avatarUrl": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profil berhasil diperbarui" }
+        }
+      }
+    },
+    "/api/targets": {
+      "get": {
+        "tags": ["Target Negara"],
+        "summary": "Ambil Daftar Negara Berbintang & Catatan",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Daftar target negara" }
+        }
+      },
+      "post": {
+        "tags": ["Target Negara"],
+        "summary": "Tambah Target Negara Berbintang",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddTargetRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Target berhasil ditambahkan" }
+        }
+      }
+    },
+    "/api/targets/{countryId}": {
+      "delete": {
+        "tags": ["Target Negara"],
+        "summary": "Hapus Bintang dari Negara Target",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "countryId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Target berhasil dihapus" }
+        }
+      }
+    },
+    "/api/targets/batch": {
+      "post": {
+        "tags": ["Target Negara"],
+        "summary": "Sinkronisasi Massal Target Negara (Batch)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BatchSyncRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Batch sync berhasil" }
+        }
+      }
+    },
+    "/api/targets/{countryId}/notes": {
+      "put": {
+        "tags": ["Target Negara"],
+        "summary": "Simpan Catatan Impian & Rencana Belajar Negara",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "countryId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SaveNotesRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Catatan berhasil disimpan" }
+        }
+      }
+    },
+    "/api/custom-tables": {
+      "get": {
+        "tags": ["Tabel Aksara Kustom"],
+        "summary": "Ambil Seluruh Tabel Aksara Kustom Pengguna",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Daftar tabel aksara buatan user" }
+        }
+      },
+      "post": {
+        "tags": ["Tabel Aksara Kustom"],
+        "summary": "Buat atau Simpan Tabel Aksara Baru",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpsertTableRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Tabel aksara berhasil disimpan" }
+        }
+      }
+    },
+    "/api/custom-tables/{id}": {
+      "put": {
+        "tags": ["Tabel Aksara Kustom"],
+        "summary": "Perbarui Tabel Aksara (Grid Huruf saat Mode Edit)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpsertTableRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Tabel berhasil diperbarui" }
+        }
+      },
+      "delete": {
+        "tags": ["Tabel Aksara Kustom"],
+        "summary": "Hapus Tabel Aksara Kustom",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Tabel berhasil dihapus" }
+        }
+      }
+    },
+    "/api/progress": {
+      "get": {
+        "tags": ["Progres Belajar & Kuis"],
+        "summary": "Ambil Riwayat Huruf yang Sudah Dihafal",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Map progres hafalan per tabel" }
+        }
+      },
+      "post": {
+        "tags": ["Progres Belajar & Kuis"],
+        "summary": "Simpan Huruf yang Baru Dihafal",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SaveProgressRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Progres berhasil disimpan" }
+        }
+      }
+    },
+    "/api/quiz-scores": {
+      "post": {
+        "tags": ["Progres Belajar & Kuis"],
+        "summary": "Simpan Skor Kuis Hafalan & Listening",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SaveQuizScoreRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Skor kuis berhasil dicatat" }
+        }
+      }
+    },
+    "/api/phrases": {
+      "get": {
+        "tags": ["Frasa Kustom"],
+        "summary": "Ambil Frasa Kustom per Bahasa",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Daftar frasa" }
+        }
+      },
+      "post": {
+        "tags": ["Frasa Kustom"],
+        "summary": "Simpan Kumpulan Frasa Kustom",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SavePhrasesRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Frasa berhasil disimpan" }
+        }
+      }
+    },
+    "/api/phrases/{languageId}": {
+      "delete": {
+        "tags": ["Frasa Kustom"],
+        "summary": "Hapus Frasa Kustom untuk Satu Bahasa",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "languageId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Frasa berhasil dihapus" }
+        }
+      }
+    },
+    "/api/phrase-categories": {
+      "get": {
+        "tags": ["Frasa Kustom"],
+        "summary": "Ambil Daftar Kategori Frasa Kustom",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Daftar kategori" }
+        }
+      },
+      "post": {
+        "tags": ["Frasa Kustom"],
+        "summary": "Tambah Kategori Frasa Baru",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SaveCategoryRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Kategori berhasil ditambahkan" }
+        }
+      }
+    },
+    "/api/phrase-categories/{name}": {
+      "delete": {
+        "tags": ["Frasa Kustom"],
+        "summary": "Hapus Kategori Frasa Kustom",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Kategori berhasil dihapus" }
+        }
+      }
+    },
+    "/api/preferences": {
+      "get": {
+        "tags": ["Pengaturan & Preferensi"],
+        "summary": "Ambil Setelan Kecepatan Audio, Toggle Suara, dan Tema",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Preferensi pengguna" }
+        }
+      },
+      "put": {
+        "tags": ["Pengaturan & Preferensi"],
+        "summary": "Perbarui Setelan Preferensi Pengguna",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SavePreferenceRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Preferensi berhasil diperbarui" }
+        }
+      }
+    }
+  }
+}

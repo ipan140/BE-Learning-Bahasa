@@ -32,3 +32,69 @@ desktop.ini
 tmp/
 dist/
 vendor/
+# =========================
+# BINARY / BUILD
+# =========================
+bin/
+build/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.out
+
+# =========================
+# TEST & COVERAGE
+# =========================
+*.test
+coverage.out
+
+# =========================
+# DEPENDENCY
+# =========================
+vendor/
+
+# =========================
+# ENV (SENSITIVE)
+# =========================
+.env
+.env.*
+
+# =========================
+# LOGS
+# =========================
+*.log
+
+# =========================
+# IDE / EDITOR
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# OS FILES
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# SWAGGER (AUTO GENERATE)
+# =========================
+docs/swagger.json
+docs/swagger.yaml
+
+# =========================
+# TEMP FILES
+# =========================
+tmp/
+*.tmp
+
+# =========================
+# DOCKER (LOCAL CONFIGS)
+# =========================
+docker-compose.yml
+docker-compose.*.yml

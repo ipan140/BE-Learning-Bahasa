@@ -20,10 +20,12 @@ var DB *gorm.DB
 func InitDatabase(databaseURL string) *gorm.DB {
 	var err error
 	DB, err = gorm.Open(postgres.Open(databaseURL), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
-		log.Fatalf("Gagal terhubung ke database PostgreSQL: %v", err)
+		log.Printf("⚠️ PERINGATAN: Belum dapat terhubung ke PostgreSQL (%v)\n", err)
+		log.Println("👉 Server tetap berjalan. Sesuaikan password database di file .env untuk mengaktifkan koneksi database.")
+		return nil
 	}
 
 	log.Println("✓ Berhasil terhubung ke database PostgreSQL.")
@@ -40,9 +42,10 @@ func InitDatabase(databaseURL string) *gorm.DB {
 		&preference.UserPreference{},
 	)
 	if err != nil {
-		log.Fatalf("Gagal auto-migrate tabel database: %v", err)
+		log.Printf("⚠️ Peringatan saat auto-migrate tabel: %v\n", err)
+	} else {
+		log.Println("✓ Auto-Migration tabel database selesai.")
 	}
 
-	log.Println("✓ Auto-Migration tabel selesai.")
 	return DB
 }

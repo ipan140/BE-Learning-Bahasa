@@ -38,16 +38,19 @@ func (s *service) SaveTable(userID uuid.UUID, req UpsertTableRequest) (*UserCust
 		tableID = fmt.Sprintf("custom-%d", time.Now().UnixMilli())
 	}
 
-	now := time.Now()
+	script := req.Script
+	if script == "" {
+		script = req.VoiceLang
+	}
+
 	table := &UserCustomTable{
 		ID:          tableID,
 		UserID:      userID,
 		Name:        name,
-		VoiceLang:   req.VoiceLang,
+		Script:      script,
 		Description: req.Description,
 		Rows:        req.Rows,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		CreatedAt:   time.Now(),
 	}
 
 	if err := s.repo.Upsert(table); err != nil {
