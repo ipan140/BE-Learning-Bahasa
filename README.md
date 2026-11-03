@@ -2,7 +2,7 @@
 
 Backend REST API mandiri dan berkinerja tinggi untuk platform **Learning Bahasa**, dibangun menggunakan **Go (Golang)** dan framework **Echo v4**. Mengadopsi arsitektur **Feature-First Modular Monolith** dengan pendekatan **Clean 5-Tier Layered Architecture** pada setiap modul bisnisnya.
 
-Database dirancang **100% kompatibel dan identik dengan skema database Supabase** menggunakan **PostgreSQL** dan **GORM Auto-Migration**.
+Database menggunakan **PostgreSQL** dengan **GORM Auto-Migration** untuk kemudahan deployment di server VPS maupun lokal.
 
 ---
 
@@ -83,7 +83,7 @@ D:\BE learning-bahasa\
 
 ## 🗄️ Skema Database & Model
 
-Backend ini mengelola **7 tabel relasional** di PostgreSQL dengan tipe data yang presisi menyesuaikan schema Supabase:
+Backend ini mengelola **7 tabel relasional** di PostgreSQL dengan tipe data yang presisi:
 
 | Nama Tabel | Primary Key | Foreign Key | Kolom Kunci Lainnya |
 | :--- | :--- | :--- | :--- |
